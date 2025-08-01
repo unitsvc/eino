@@ -28,6 +28,10 @@ With the above arsenal, Eino can standardize, simplify, and improve efficiency a
 
 # A quick walkthrough
 
+```Go
+go mod edit -replace=github.com/cloudwego/eino=github.com/unitsvc/eino@dev
+```
+
 Use a component directly:
 ```Go
 model, _ := openai.NewChatModel(ctx, config) // create an invokable LLM instance
