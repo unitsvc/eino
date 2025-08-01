@@ -387,3 +387,7 @@ func (r *Agent) Stream(ctx context.Context, input []*schema.Message, opts ...age
 func (r *Agent) ExportGraph() (compose.AnyGraph, []compose.GraphAddNodeOpt) {
 	return r.graph, r.graphAddNodeOpts
 }
+
+func (r *Agent) ExportMermaid(ctx context.Context, opts ...compose.DrawMermaidOption) {
+	r.graph.Compile(ctx, compose.WithGraphCompileCallbacks(compose.NewDrawMermaid(opts...)))
+}
