@@ -13,7 +13,6 @@ import (
 // GenerateMermaidFlowchart generates a Mermaid flowchart string from the provided GraphInfo.
 func GenerateMermaidFlowchart(info *GraphInfo) string {
 	var buf bytes.Buffer
-	buf.WriteString("```mermaid\n")
 	buf.WriteString("graph TD\n")
 
 	// escapeID replaces characters that are invalid in Mermaid node IDs.
@@ -149,7 +148,6 @@ func GenerateMermaidFlowchart(info *GraphInfo) string {
 		}
 	}
 
-	buf.WriteString("```\n")
 	return buf.String()
 }
 
