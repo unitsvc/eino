@@ -15,11 +15,19 @@ English | [中文](README.zh_CN.md)
 ```Go
 go mod edit -replace=github.com/cloudwego/eino=github.com/unitsvc/eino@dev
 
+```
+
+```Go
+
 # export mermaid
 replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.1
 
 # fix kin-openapi
 replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.2
+
+# google adk
+replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.5.0-dev.2
+
 ```
 
 # Overview
