@@ -21,11 +21,9 @@ go mod edit -replace=github.com/cloudwego/eino=github.com/unitsvc/eino@dev
 
 # export mermaid
 replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.1
-
 # fix kin-openapi
 replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.2
-
-# google adk
+# add google adk
 replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.5.0-dev.2
 
 ```
