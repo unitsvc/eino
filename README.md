@@ -12,6 +12,16 @@
 
 English | [中文](README.zh_CN.md)
 
+```Go
+go mod edit -replace=github.com/cloudwego/eino=github.com/unitsvc/eino@dev
+
+# export mermaid
+replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.1
+
+# fix kin-openapi
+replace github.com/cloudwego/eino => github.com/unitsvc/eino v0.4.1-dev.2
+```
+
 # Overview
 
 **Eino['aino]** (pronounced similarly to "I know") aims to be the ultimate LLM application development framework in Golang. Drawing inspirations from many excellent LLM application development frameworks in the open-source community such as LangChain & LlamaIndex, etc., as well as learning from cutting-edge research and real world applications, Eino offers an LLM application development framework that emphasizes on simplicity, scalability, reliability and effectiveness that better aligns with Golang programming conventions.
@@ -27,10 +37,6 @@ With the above arsenal, Eino can standardize, simplify, and improve efficiency a
 ![](.github/static/img/eino/eino_concept.jpeg)
 
 # A quick walkthrough
-
-```Go
-go mod edit -replace=github.com/cloudwego/eino=github.com/unitsvc/eino@dev
-```
 
 Use a component directly:
 ```Go
