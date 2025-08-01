@@ -263,7 +263,7 @@ func NewAgent(ctx context.Context, config *AgentConfig) (_ *Agent, err error) {
 		return nil, err
 	}
 
-	modelPostBranchCondition := func(_ context.Context, sr *schema.StreamReader[*schema.Message]) (endNode string, err error) {
+	modelPostBranchCondition := func(ctx context.Context, sr *schema.StreamReader[*schema.Message]) (endNode string, err error) {
 		if isToolCall, err := toolCallChecker(ctx, sr); err != nil {
 			return "", err
 		} else if isToolCall {
@@ -386,4 +386,8 @@ func (r *Agent) Stream(ctx context.Context, input []*schema.Message, opts ...age
 // ExportGraph exports the underlying graph from Agent, along with the []compose.GraphAddNodeOpt to be used when adding this graph to another graph.
 func (r *Agent) ExportGraph() (compose.AnyGraph, []compose.GraphAddNodeOpt) {
 	return r.graph, r.graphAddNodeOpts
+}
+
+func (r *Agent) ExportMermaid(ctx context.Context, opts ...compose.DrawMermaidOption) {
+	r.graph.Compile(ctx, compose.WithGraphCompileCallbacks(compose.NewDrawMermaid(opts...)))
 }
