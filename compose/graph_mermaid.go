@@ -3,11 +3,22 @@ package compose
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+)
+
+type OutputFormat string
+
+const (
+	OutputMMD OutputFormat = "mmd"
+	OutputPNG OutputFormat = "png"
+	OutputSVG OutputFormat = "svg"
 )
 
 // GenerateMermaidFlowchart generates a Mermaid flowchart string from the provided GraphInfo.
@@ -153,8 +164,9 @@ func GenerateMermaidFlowchart(info *GraphInfo) string {
 
 // DrawMermaid handles Mermaid diagram generation and writing.
 type DrawMermaid struct {
-	path string
-	name string
+	path    string
+	name    string
+	formats []OutputFormat
 }
 
 // Option defines a configuration function for DrawMermaid.
@@ -181,12 +193,19 @@ func WithName(name string) DrawMermaidOption {
 	}
 }
 
+func WithFormats(formats ...OutputFormat) DrawMermaidOption {
+	return func(d *DrawMermaid) {
+		d.formats = formats
+	}
+}
+
 // NewDrawMermaid creates a new DrawMermaid instance with optional configuration.
 func NewDrawMermaid(opts ...DrawMermaidOption) *DrawMermaid {
 	defaultPath, _ := filepath.Abs("./output")
 	d := &DrawMermaid{
-		path: defaultPath,
-		name: "graph.mmd",
+		path:    defaultPath,
+		name:    "graph",
+		formats: []OutputFormat{OutputMMD},
 	}
 	for _, opt := range opts {
 		opt(d)
@@ -207,10 +226,21 @@ func (d *DrawMermaid) OnFinish(ctx context.Context, info *GraphInfo) {
 		return
 	}
 
-	if err := d.writeToFile([]byte(code)); err != nil {
-		log.Printf("[Mermaid] Failed: %v\n", err)
-	} else {
-		log.Printf("[Mermaid] Saved: %s\n", filepath.Join(d.path, d.name))
+	for _, format := range d.formats {
+		switch format {
+		case OutputMMD:
+			if err := d.writeToFile([]byte(code)); err != nil {
+				log.Printf("[Mermaid] Failed to save MMD: %v\n", err)
+			} else {
+				log.Printf("[Mermaid] MMD Saved: %s\n", filepath.Join(d.path, d.getMmdName()))
+			}
+		case OutputPNG, OutputSVG:
+			if err := d.downloadImage(code, string(format)); err != nil {
+				log.Printf("[Mermaid] %s Failed: %v\n", strings.ToUpper(string(format)), err)
+			}
+		default:
+			log.Printf("[Mermaid] Unknown format: %s\n", format)
+		}
 	}
 }
 
@@ -219,8 +249,8 @@ func (d *DrawMermaid) writeToFile(data []byte) error {
 	if err := os.MkdirAll(d.path, 0755); err != nil {
 		return fmt.Errorf("create dir %q: %w", d.path, err)
 	}
+	outputPath := filepath.Join(d.path, d.getMmdName())
 
-	outputPath := filepath.Join(d.path, d.name)
 	if !strings.HasPrefix(outputPath, d.path) {
 		return fmt.Errorf("invalid output path: %s (outside of %s)", outputPath, d.path)
 	}
@@ -230,4 +260,61 @@ func (d *DrawMermaid) writeToFile(data []byte) error {
 	}
 
 	return os.WriteFile(outputPath, data, 0644)
+}
+
+func (d *DrawMermaid) getMmdName() string {
+	fileName := d.name
+	if !strings.HasSuffix(fileName, ".mmd") {
+		fileName += ".mmd"
+	}
+	return fileName
+}
+
+func (d *DrawMermaid) downloadImage(code, fileType string) error {
+	encoded := base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString([]byte(code))
+
+	var url string
+	switch fileType {
+	case string(OutputPNG):
+		url = fmt.Sprintf("https://mermaid.ink/img/%s?type=png&bgColor=white", encoded)
+	case string(OutputSVG):
+		url = fmt.Sprintf("https://mermaid.ink/svg/%s", encoded)
+	default:
+		return fmt.Errorf("unsupported file type: %s", fileType)
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return fmt.Errorf("download %s failed: %w", fileType, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("download %s failed: status %s", fileType, resp.Status)
+	}
+
+	if err := os.MkdirAll(d.path, 0755); err != nil {
+		return fmt.Errorf("create dir %q: %w", d.path, err)
+	}
+
+	fileName := d.name
+	if ext := filepath.Ext(fileName); ext != "" {
+		fileName = strings.TrimSuffix(fileName, ext)
+	}
+
+	fileName += "." + fileType
+	outputPath := filepath.Join(d.path, fileName)
+
+	outFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("create %s file: %w", fileType, err)
+	}
+	defer outFile.Close()
+
+	if _, err := io.Copy(outFile, resp.Body); err != nil {
+		return fmt.Errorf("save %s: %w", fileType, err)
+	}
+
+	log.Printf("[Mermaid] %s Saved: %s\n", strings.ToUpper(fileType), outputPath)
+	return nil
 }

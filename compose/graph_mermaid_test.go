@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+// go test -run ^TestGenerateMermaidFlowchart$
 func TestGenerateMermaidFlowchart(t *testing.T) {
 	ctx := context.Background()
 	g := NewGraph[string, string]()
@@ -24,7 +25,15 @@ func TestGenerateMermaidFlowchart(t *testing.T) {
 	_ = g.AddEdge("node_2", "node_3")
 	_ = g.AddEdge("node_3", END)
 
-	_, err := g.Compile(ctx, WithGraphCompileCallbacks(NewDrawMermaid()))
+	_, err := g.Compile(ctx, WithGraphCompileCallbacks(
+		NewDrawMermaid(
+			WithName("output_graph"),
+			WithFormats(
+				OutputSVG,
+				OutputPNG,
+				OutputMMD,
+			)),
+	))
 	if err != nil {
 		log.Printf("compile graph failed, err=%v", err)
 		return
